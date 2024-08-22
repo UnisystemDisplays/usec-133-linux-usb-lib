@@ -708,7 +708,8 @@ scsi_it8951_cmd_auto_reset (int                fd,
  * it8951_cmd_inquiry()
  */
 static uint8_t
-it8951_cmd_inquiry (usec_ctx  *ctx)
+it8951_cmd_inquiry (usec_ctx  *ctx,
+                    uint8_t    id)
 {
   it8951_sg_io_hdr *hdr;
   uint8_t data_buffer[USEC_DEV_BLOCK_LEN*256];
@@ -718,7 +719,7 @@ it8951_cmd_inquiry (usec_ctx  *ctx)
   set_xfer_data (hdr, data_buffer, USEC_DEV_BLOCK_LEN*256);
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_inquiry (ctx->dev_fd, hdr);
+  status = scsi_it8951_cmd_inquiry (ctx->dev_fd[id], hdr);
 
   destroy_io_hdr(hdr);
   return status;
@@ -729,6 +730,7 @@ it8951_cmd_inquiry (usec_ctx  *ctx)
  */
 static uint8_t
 it8951_cmd_system_info (usec_ctx         *ctx,
+                        uint8_t           id,
                         it8951_sys_info  *info)
 {
   it8951_sg_io_hdr *hdr;
@@ -738,7 +740,7 @@ it8951_cmd_system_info (usec_ctx         *ctx,
   set_xfer_data (hdr, info, (sizeof(it8951_sys_info) / sizeof(uint32_t)));
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_system_info (ctx->dev_fd, hdr);
+  status = scsi_it8951_cmd_system_info (ctx->dev_fd[id], hdr);
   if (status == USEC_DEV_OK)
     {
       it8951_sys_info *data = hdr->dxferp;
@@ -773,6 +775,7 @@ it8951_cmd_system_info (usec_ctx         *ctx,
  */
 static uint8_t
 it8951_cmd_read_mem (usec_ctx  *ctx,
+                     uint8_t    id,
                      uint32_t   addr,
                      uint16_t   length,
                      uint8_t   *buf)
@@ -784,7 +787,7 @@ it8951_cmd_read_mem (usec_ctx  *ctx,
   set_xfer_data (hdr, buf, length);
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_read_mem (ctx->dev_fd, hdr, addr, length);
+  status = scsi_it8951_cmd_read_mem (ctx->dev_fd[id], hdr, addr, length);
 
   destroy_io_hdr(hdr);
   return status;
@@ -795,6 +798,7 @@ it8951_cmd_read_mem (usec_ctx  *ctx,
  */
 static uint8_t
 it8951_cmd_write_mem (usec_ctx  *ctx,
+                      uint8_t    id,
                       uint32_t   addr,
                       uint16_t   length,
                       uint8_t   *buf)
@@ -806,7 +810,7 @@ it8951_cmd_write_mem (usec_ctx  *ctx,
   set_xfer_data (hdr, buf, length);
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_write_mem (ctx->dev_fd, hdr, addr, length);
+  status = scsi_it8951_cmd_write_mem (ctx->dev_fd[id], hdr, addr, length);
 
   destroy_io_hdr(hdr);
   return status;
@@ -817,6 +821,7 @@ it8951_cmd_write_mem (usec_ctx  *ctx,
  */
 static uint8_t
 it8951_cmd_read_reg (usec_ctx  *ctx,
+                     uint8_t    id,
                      uint32_t   addr,
                      uint32_t  *buf)
 {
@@ -827,7 +832,7 @@ it8951_cmd_read_reg (usec_ctx  *ctx,
   set_xfer_data (hdr, buf, sizeof(uint32_t));
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_read_reg (ctx->dev_fd, hdr, addr);
+  status = scsi_it8951_cmd_read_reg (ctx->dev_fd[id], hdr, addr);
 
   destroy_io_hdr(hdr);
   return status;
@@ -838,6 +843,7 @@ it8951_cmd_read_reg (usec_ctx  *ctx,
  */
 static uint8_t
 it8951_cmd_write_reg (usec_ctx  *ctx,
+                      uint8_t    id,
                       uint32_t   addr,
                       uint32_t   buf)
 {
@@ -850,7 +856,7 @@ it8951_cmd_write_reg (usec_ctx  *ctx,
   set_xfer_data (hdr, &buf_in, sizeof(uint32_t));
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_write_reg (ctx->dev_fd, hdr, addr);
+  status = scsi_it8951_cmd_write_reg (ctx->dev_fd[id], hdr, addr);
 
   destroy_io_hdr(hdr);
   return status;
@@ -861,6 +867,7 @@ it8951_cmd_write_reg (usec_ctx  *ctx,
  */
 static uint8_t
 it8951_cmd_dpy_area (usec_ctx  *ctx,
+                     uint8_t    id,
                      uint32_t   pos_x,
                      uint32_t   pos_y,
                      uint32_t   width,
@@ -877,14 +884,14 @@ it8951_cmd_dpy_area (usec_ctx  *ctx,
   displayArg.width        = data_swap_32 (width);
   displayArg.height       = data_swap_32 (height);
   displayArg.engine_index = data_swap_32 (wait_ready);
-  displayArg.mem_addr     = data_swap_32 (ctx->dev_addr);
+  displayArg.mem_addr     = data_swap_32 (ctx->dev_addr[id]);
   displayArg.wav_mode     = data_swap_32 (wav_mode);
 
   hdr = init_io_hdr();
   set_xfer_data (hdr, &displayArg, sizeof(it8951_disp_arg));
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_dpy_area (ctx->dev_fd, hdr);
+  status = scsi_it8951_cmd_dpy_area (ctx->dev_fd[id], hdr);
 
   destroy_io_hdr(hdr);
   return status;
@@ -895,6 +902,7 @@ it8951_cmd_dpy_area (usec_ctx  *ctx,
  */
 static uint8_t
 it8951_cmd_load_img (usec_ctx  *ctx,
+                     uint8_t    id,
                      uint8_t   *src_img,
                      uint32_t   pos_x,
                      uint32_t   pos_y,
@@ -907,7 +915,7 @@ it8951_cmd_load_img (usec_ctx  *ctx,
   counter = (USEC_DEV_SPT_LEN / width);
   status = 0;
 
-  if (width <= 2048 && width != (ctx->dev_width))
+  if (width <= 2048 && width != (ctx->dev_width[id]))
     {
       it8951_sg_io_hdr  *hdr;
       it8951_load_arg    load_arg;
@@ -926,7 +934,7 @@ it8951_cmd_load_img (usec_ctx  *ctx,
           load_arg.y    = data_swap_32 (pos_y + i);
           load_arg.w    = data_swap_32 (width);
           load_arg.h    = data_swap_32 (counter);
-          load_arg.addr = data_swap_32 (ctx->dev_addr);
+          load_arg.addr = data_swap_32 (ctx->dev_addr[id]);
 
           memcpy (buf, &load_arg, sizeof(it8951_load_arg));
           memcpy ((buf + sizeof(it8951_load_arg)),
@@ -935,7 +943,7 @@ it8951_cmd_load_img (usec_ctx  *ctx,
           set_xfer_data (hdr, buf, sizeof(it8951_load_arg) + (width*counter));
           set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-          status |= scsi_it8951_cmd_load_img (ctx->dev_fd, hdr);
+          status |= scsi_it8951_cmd_load_img (ctx->dev_fd[id], hdr);
           free(buf);
         }
 
@@ -948,8 +956,9 @@ it8951_cmd_load_img (usec_ctx  *ctx,
           if (counter > (height-i))
             counter = (height-i);
 
-          status |= it8951_cmd_write_mem (ctx,
-                    (ctx->dev_addr + pos_x + ((pos_y + i) * (ctx->dev_width))),
+          status |= it8951_cmd_write_mem (ctx, id,
+                    (ctx->dev_addr[id] + pos_x + ((pos_y + i) * \
+                    (ctx->dev_width[id]))),
                     (uint32_t)(width * counter), (src_img + (i * width)));
         }
     }
@@ -962,6 +971,7 @@ it8951_cmd_load_img (usec_ctx  *ctx,
  */
 static uint8_t
 it8951_cmd_get_set_temp (usec_ctx         *ctx,
+                         uint8_t           id,
                          it8951_temp_arg  *temp)
 {
   it8951_sg_io_hdr *hdr;
@@ -973,7 +983,8 @@ it8951_cmd_get_set_temp (usec_ctx         *ctx,
   set_xfer_data (hdr, temp, sizeof(it8951_temp_arg) / sizeof(uint8_t));
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_get_set_temp (ctx->dev_fd, hdr, temp->set,temp->val);
+  status = scsi_it8951_cmd_get_set_temp (ctx->dev_fd[id],
+                                         hdr, temp->set,temp->val);
   if (status == USEC_DEV_OK)
     {
       if (flag == IT8951_TEMP_GET)
@@ -998,6 +1009,7 @@ it8951_cmd_get_set_temp (usec_ctx         *ctx,
  */
 static uint8_t
 it8951_cmd_get_set_pmic (usec_ctx  *ctx,
+                         uint8_t    id,
                          uint16_t   vcom_set_value,
                          uint16_t  *vcom_get_value,
                          uint8_t    do_set_vcom,
@@ -1011,7 +1023,7 @@ it8951_cmd_get_set_pmic (usec_ctx  *ctx,
   set_xfer_data (hdr, vcom_get_value, sizeof (uint16_t));
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_set_pmic(ctx->dev_fd, hdr, vcom_set_value,
+  status = scsi_it8951_cmd_set_pmic(ctx->dev_fd[id], hdr, vcom_set_value,
                                     do_set_vcom, do_set_power, power_on_off);
 if (status == USEC_DEV_OK)
     {
@@ -1030,7 +1042,8 @@ if (status == USEC_DEV_OK)
  * it8951_cmd_auto_reset()
  */
 static uint8_t
-it8951_cmd_auto_reset (usec_ctx *ctx)
+it8951_cmd_auto_reset (usec_ctx  *ctx,
+                       uint8_t    id)
 {
   it8951_sg_io_hdr *hdr;
   uint8_t status;
@@ -1039,7 +1052,7 @@ it8951_cmd_auto_reset (usec_ctx *ctx)
   set_xfer_data (hdr, NULL, 0);
   set_sense_data (hdr, ctx->dev_sense_buf, USEC_DEV_SENSE_LEN);
 
-  status = scsi_it8951_cmd_auto_reset (ctx->dev_fd, hdr);
+  status = scsi_it8951_cmd_auto_reset (ctx->dev_fd[id], hdr);
 
   destroy_io_hdr(hdr);
   return status;
@@ -1101,7 +1114,7 @@ usec_init (uint8_t *dev_path)
   memset (ctx->dev_sense_buf, 0, USEC_DEV_SENSE_LEN);
 
   /* open usec device */
-  ctx->dev_fd = open ((char*)dev_path, O_RDWR);
+  ctx->dev_fd[0] = open ((char*)dev_path, O_RDWR);
   if (ctx->dev_fd <= 0)
     {
       usec_dev_log ("[usec] error: cannot open '%s' device\n\r", dev_path);
@@ -1112,35 +1125,37 @@ usec_init (uint8_t *dev_path)
     }
 
   /* send 'inquiry' command */
-  status = it8951_cmd_inquiry(ctx);
+  status = it8951_cmd_inquiry (ctx, 0);
   if (status != 0)
     {
       usec_dev_log ("[usec] error: cannot send 'inquiry' command\n\r");
 
-      close (ctx->dev_fd);
+      close (ctx->dev_fd[0]);
       free (ctx->dev_sense_buf);
       free (ctx);
       return NULL;
     }
 
   /* get system info */
-  status = it8951_cmd_system_info (ctx, &info);
+  status = it8951_cmd_system_info (ctx, 0, &info);
   if (status != 0)
     {
       usec_dev_log ("[usec] error: cannot read data from controller\n\r");
 
-      close (ctx->dev_fd);
+      close (ctx->dev_fd[0]);
       free (ctx->dev_sense_buf);
       free (ctx);
       return NULL;
     }
 
-  ctx->dev_width  = info.width;
-  ctx->dev_height = info.height;
-  ctx->dev_addr   = info.image_buf_base;
+  ctx->dev_width[0]  = info.width;
+  ctx->dev_height[0] = info.height;
+  ctx->dev_addr[0]   = info.image_buf_base;
 
-  usec_dev_log ("[usec] status: screen width - %d [px]\n\r", ctx->dev_width);
-  usec_dev_log ("[usec] status: screen height - %d [px]\n\r", ctx->dev_height);
+  usec_dev_log ("[usec] status: screen width - %d [px]\n\r",
+                ctx->dev_width[0]);
+  usec_dev_log ("[usec] status: screen height - %d [px]\n\r",
+                ctx->dev_height[0]);
 
   return ctx;
 }
@@ -1157,7 +1172,7 @@ usec_deinit (usec_ctx *ctx)
       return;
     }
 
-  close (ctx->dev_fd);
+  close (ctx->dev_fd[0]);
   free (ctx->dev_sense_buf);
   free (ctx);
 }
@@ -1179,7 +1194,7 @@ usec_get_temp (usec_ctx  *ctx,
     }
 
   temp.set = IT8951_TEMP_GET;
-  status = it8951_cmd_get_set_temp (ctx, &temp);
+  status = it8951_cmd_get_set_temp (ctx, 0, &temp);
   if (status == USEC_DEV_OK)
     {
       usec_dev_log ("[usec] status: screen temp - %d [degC]\n\r", temp.val);
@@ -1211,7 +1226,7 @@ usec_get_vcom (usec_ctx  *ctx,
       return USEC_DEV_ERR;
     }
 
-  status = it8951_cmd_get_set_pmic (ctx, 0xFFFF, &vcom, 0, 0, 0);
+  status = it8951_cmd_get_set_pmic (ctx, 0, 0xFFFF, &vcom, 0, 0, 0);
   if (status == USEC_DEV_OK)
     {
       usec_dev_log ("[usec] status: screen vcom - -%.2f [V]\n\r",
@@ -1266,14 +1281,14 @@ usec_img_upload (usec_ctx  *ctx,
       return USEC_DEV_ERR;
     }
 
-  if ((img_pos_x + img_width > ctx->dev_width) || \
-      (img_pos_y + img_height > ctx->dev_height))
+  if ((img_pos_x + img_width > ctx->dev_width[0]) || \
+      (img_pos_y + img_height > ctx->dev_height[0]))
     {
       usec_dev_log ("[usec] error: image out of screen bounds\n\r");
       return USEC_DEV_ERR;
     }
 
-  status = it8951_cmd_load_img (ctx, img_data,
+  status = it8951_cmd_load_img (ctx, 0, img_data,
                                 img_pos_x, img_pos_y,
                                 img_width, img_height);
   if (status == USEC_DEV_OK)
@@ -1322,14 +1337,14 @@ usec_img_update (usec_ctx  *ctx,
       return USEC_DEV_ERR;
     }
 
-  if ((area_pos_x + area_width > ctx->dev_width) || \
-      (area_pos_y + area_height > ctx->dev_height))
+  if ((area_pos_x + area_width > ctx->dev_width[0]) || \
+      (area_pos_y + area_height > ctx->dev_height[0]))
     {
       usec_dev_log ("[usec] error: update area out of screen bounds\n\r");
       return USEC_DEV_ERR;
     }
 
-  status = it8951_cmd_dpy_area (ctx, area_pos_x, area_pos_y,
+  status = it8951_cmd_dpy_area (ctx, 0, area_pos_x, area_pos_y,
                                 area_width, area_height,
                                 update_mode, update_wait);
   if (status == USEC_DEV_OK)
@@ -1343,7 +1358,7 @@ usec_img_update (usec_ctx  *ctx,
        usec_dev_log ("[usec] error: cannot update selected display area\n\r");
     }
 
-  return it8951_cmd_get_set_pmic (ctx, 0, NULL, 0, 1, 0);
+  return it8951_cmd_get_set_pmic (ctx, 0, 0, NULL, 0, 1, 0);
 }
 
 /******************************************************************************/

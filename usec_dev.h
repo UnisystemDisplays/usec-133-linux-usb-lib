@@ -89,10 +89,10 @@ enum
 
 typedef struct
 {
-  int        dev_fd;        /* device file descriptor */
-  uint32_t   dev_width;     /* screen width [px]  */
-  uint32_t   dev_height;    /* screen height [px] */
-  uint32_t   dev_addr;      /* only for internal usage */
+  int        dev_fd[1];     /* device file descriptor */
+  uint32_t   dev_width[1];  /* screen width [px]  */
+  uint32_t   dev_height[1]; /* screen height [px] */
+  uint32_t   dev_addr[1];   /* only for internal usage */
   uint8_t   *dev_sense_buf; /* only for internal usage */
 } usec_ctx;
 
