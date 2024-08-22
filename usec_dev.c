@@ -1233,6 +1233,8 @@ usec_get_vcom (usec_ctx  *ctx,
 uint8_t
 usec_img_upload (usec_ctx  *ctx,
                  uint8_t   *img_data,
+                 size_t     img_size,
+                 uint8_t    img_bpp,
                  uint32_t   img_pos_x,
                  uint32_t   img_pos_y,
                  uint32_t   img_width,
@@ -1246,9 +1248,21 @@ usec_img_upload (usec_ctx  *ctx,
       return USEC_DEV_ERR;
     }
 
+  if (img_bpp != IMG_8BPP)
+    {
+      usec_dev_log ("[usec] error: usb lib supports only IMG_8BPP mode\n\r");
+      return USEC_DEV_ERR;
+    }
+
   if ((img_width == 0) || (img_height == 0))
     {
       usec_dev_log ("[usec] error: invalid image data width/height\n\r");
+      return USEC_DEV_ERR;
+    }
+
+  if ((img_width * img_height) != img_size)
+    {
+      usec_dev_log ("[usec] error: invalid image data size\n\r");
       return USEC_DEV_ERR;
     }
 

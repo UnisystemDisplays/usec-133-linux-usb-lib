@@ -2,6 +2,7 @@
 #define __USEC_DEV_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 /******************************************************************************/
 
@@ -76,6 +77,16 @@ enum
 
 /******************************************************************************/
 
+enum
+{
+  IMG_1BPP,
+  IMG_2BPP,
+  IMG_4BPP,
+  IMG_8BPP
+};
+
+/******************************************************************************/
+
 typedef struct
 {
   int        dev_fd;        /* device file descriptor */
@@ -104,6 +115,8 @@ usec_get_vcom                (usec_ctx  *ctx,
 uint8_t
 usec_img_upload              (usec_ctx  *ctx,
                               uint8_t   *img_data,
+                              size_t     img_size,
+                              uint8_t    img_bpp,
                               uint32_t   img_pos_x,
                               uint32_t   img_pos_y,
                               uint32_t   img_width,
