@@ -1071,7 +1071,7 @@ usec_ctx *
 usec_init (uint8_t *dev_path)
 {
   usec_ctx *ctx;
-  it8951_sys_info *info;
+  it8951_sys_info info;
   uint8_t status;
 
   /* initial path check */
@@ -1124,18 +1124,7 @@ usec_init (uint8_t *dev_path)
     }
 
   /* get system info */
-  info = (it8951_sys_info*)malloc(sizeof(it8951_sys_info));
-  if (info == NULL)
-    {
-      usec_dev_log ("[usec] error: cannot initialize device context\n\r");
-
-      close (ctx->dev_fd);
-      free (ctx->dev_sense_buf);
-      free (ctx);
-      return NULL;
-    }
-
-  status = it8951_cmd_system_info (ctx, info);
+  status = it8951_cmd_system_info (ctx, &info);
   if (status != 0)
     {
       usec_dev_log ("[usec] error: cannot read data from controller\n\r");
@@ -1146,9 +1135,9 @@ usec_init (uint8_t *dev_path)
       return NULL;
     }
 
-  ctx->dev_width  = info->width;
-  ctx->dev_height = info->height;
-  ctx->dev_addr   = info->image_buf_base;
+  ctx->dev_width  = info.width;
+  ctx->dev_height = info.height;
+  ctx->dev_addr   = info.image_buf_base;
 
   usec_dev_log ("[usec] status: screen width - %d [px]\n\r", ctx->dev_width);
   usec_dev_log ("[usec] status: screen height - %d [px]\n\r", ctx->dev_height);
