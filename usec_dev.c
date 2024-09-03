@@ -1081,18 +1081,12 @@ usec_dev_log (const char* fmt, ...)
  * usec_init()
  */
 usec_ctx *
-usec_init (uint8_t *dev_path)
+usec_init (const uint8_t *dev_path)
 {
   usec_ctx *ctx;
   it8951_sys_info info;
+  uint8_t *path;
   uint8_t status;
-
-  /* initial path check */
-  if (dev_path == NULL)
-    {
-      usec_dev_log ("[usec] error: invalid device path\n\r");
-      return NULL;
-    }
 
   /* init usec context */
   ctx = malloc(sizeof(*ctx));
@@ -1113,9 +1107,12 @@ usec_init (uint8_t *dev_path)
     }
   memset (ctx->dev_sense_buf, 0, USEC_DEV_SENSE_LEN);
 
+  /* set device path */
+  path = dev_path ? (uint8_t*)dev_path : (uint8_t*)"/dev/usec_1";
+
   /* open usec device */
-  ctx->dev_fd[0] = open ((char*)dev_path, O_RDWR);
-  if (ctx->dev_fd <= 0)
+  ctx->dev_fd[0] = open ((char*)path, O_RDWR);
+  if (ctx->dev_fd[0] <= 0)
     {
       usec_dev_log ("[usec] error: cannot open '%s' device\n\r", dev_path);
 
@@ -1275,7 +1272,8 @@ usec_img_upload (usec_ctx  *ctx,
       return USEC_DEV_ERR;
     }
 
-  if ((img_width * img_height) != img_size)
+  if ((img_size > (8 * ctx->dev_width[0] * ctx->dev_width[0])) || \
+      (img_width * img_height) != img_size)
     {
       usec_dev_log ("[usec] error: invalid image data size\n\r");
       return USEC_DEV_ERR;
@@ -1334,6 +1332,13 @@ usec_img_update (usec_ctx  *ctx,
   if ((area_width == 0) || (area_height == 0))
     {
       usec_dev_log ("[usec] error: invalid update area width/height\n\r");
+      return USEC_DEV_ERR;
+    }
+
+  if ((area_pos_x > ctx->dev_width[0]) || \
+      (area_pos_y > ctx->dev_height[0]))
+    {
+      usec_dev_log ("[usec] error: update area out of screen bounds\n\r");
       return USEC_DEV_ERR;
     }
 

@@ -99,37 +99,37 @@ typedef struct
 /******************************************************************************/
 
 usec_ctx *
-usec_init                    (uint8_t   *dev_path);
+usec_init                    (const uint8_t  *dev_path);
 
 void
-usec_deinit                  (usec_ctx  *ctx);
+usec_deinit                  (usec_ctx       *ctx);
 
 uint8_t
-usec_get_temp                (usec_ctx  *ctx,
-                              uint8_t   *temp_val);
+usec_get_temp                (usec_ctx       *ctx,
+                              uint8_t        *temp_val);
 
 uint8_t
-usec_get_vcom                (usec_ctx  *ctx,
-                              uint16_t  *vcom_val);
+usec_get_vcom                (usec_ctx       *ctx,
+                              uint16_t       *vcom_val);
 
 uint8_t
-usec_img_upload              (usec_ctx  *ctx,
-                              uint8_t   *img_data,
-                              size_t     img_size,
-                              uint8_t    img_bpp,
-                              uint32_t   img_pos_x,
-                              uint32_t   img_pos_y,
-                              uint32_t   img_width,
-                              uint32_t   img_height);
+usec_img_upload              (usec_ctx       *ctx,
+                              uint8_t        *img_data,
+                              size_t          img_size,
+                              uint8_t         img_bpp,
+                              uint32_t        img_pos_x,
+                              uint32_t        img_pos_y,
+                              uint32_t        img_width,
+                              uint32_t        img_height);
 
 uint8_t
-usec_img_update              (usec_ctx  *ctx,
-                              uint32_t   area_pos_x,
-                              uint32_t   area_pos_y,
-                              uint32_t   area_width,
-                              uint32_t   area_height,
-                              uint8_t    update_mode,
-                              uint8_t    wait_ready);
+usec_img_update              (usec_ctx       *ctx,
+                              uint32_t        area_pos_x,
+                              uint32_t        area_pos_y,
+                              uint32_t        area_width,
+                              uint32_t        area_height,
+                              uint8_t         update_mode,
+                              uint8_t    update_wait);
 
 /******************************************************************************/
 
