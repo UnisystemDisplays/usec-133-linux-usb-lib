@@ -1108,7 +1108,7 @@ usec_init (const uint8_t *dev_path)
   memset (ctx->dev_sense_buf, 0, USEC_DEV_SENSE_LEN);
 
   /* set device path */
-  path = dev_path ? (uint8_t*)dev_path : (uint8_t*)"/dev/usec_1";
+  path = dev_path ? (uint8_t*)dev_path : (uint8_t*)"/dev/eink_usec_133BWN0";
 
   /* open usec device */
   ctx->dev_fd[0] = open ((char*)path, O_RDWR);
